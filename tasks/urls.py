@@ -4,8 +4,9 @@ from tasks import views
 
 
 urlpatterns = [
-    url(r'^tasks/$', views.TaskList.as_view()),
-    url(r'^tasks/(?P<pk>[0-9]+)/$', views.TaskDetail.as_view()),
+    url(r'^mytasks/$', views.MyListApi.as_view()),
+    url(r'^tasks/$', views.TaskListView.as_view()),
+    url(r'^tasks/(?P<pk>[0-9]+)/$', views.TaskDetailView.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
