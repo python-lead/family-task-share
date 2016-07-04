@@ -1,8 +1,8 @@
 from django.db import models
 
 
-class Families(models.Model):
-    user_id = models.ForeignKey('auth.User', related_name='Family')
+class Family(models.Model):  # todo: change name to family. Classes shouldn't be called
+    user = models.ForeignKey('auth.User', related_name='Family')
     family_name = models.CharField(max_length=40)
 
 
@@ -13,6 +13,7 @@ class Task(models.Model):
     reactivated_at = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=False)
     repeatable = models.BooleanField(default=False)
+    delegate = models.ManyToManyField('auth.User')
 
     def __str__(self):
         return "[{}] owner {}, desc: {}".format(self.id,
@@ -22,15 +23,3 @@ class Task(models.Model):
     class Meta:
         ordering = ['-reactivated_at']
 
-
-class TaskList(models.Model):
-    # todo: change user_id, task_id names to user, task. make migrations
-    # todo: owner shouldn't be allowed to delegate task to himself
-    user_id = models.ForeignKey('auth.User', related_name="Tasks")
-    task_id = models.ForeignKey(Task, related_name="Owner")
-
-    def __str__(self):
-        return "[{}] owner {}, delegate {}, desc: {}".format(self.task_id.id,
-                                                             self.task_id.owner,
-                                                             self.user_id.username,
-                                                             self.task_id.description[:10])

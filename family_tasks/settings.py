@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '9u6o!j_u3bqe9)#3rxiv6nz+y(%nm+6xc=v$@%uit7@oq8ad1@'
+SECRET_KEY = '9u6o!j_u3bqe9)#3rxiv6nz+y(%nm+6xc=v$@%uit7@oq8ad1@'  # todo : move to secret.json
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tasks.apps.TasksConfig',
+    'tasks',
     'rest_framework',
 
 ]
@@ -82,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'fts_db',
         'USER': 'myprojectdbuser',
-        'PASSWORD': 'myprojectdbpassword',
+        'PASSWORD': 'myprojectdbpassword', # todo : move to secret.json
         'HOST': 'localhost',
         'PORT': '',
     }

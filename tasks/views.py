@@ -1,5 +1,5 @@
 from rest_framework import generics
-from tasks.models import Task, TaskList
+from tasks.models import Task
 from tasks.serializers import TaskSerializer
 
 from django.http import Http404
@@ -22,17 +22,17 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TaskSerializer
 
 
-class MyList(generics.ListCreateAPIView):
-    # todo: logout gives error int() argument must be a string or a number, not 'AnonymousUser'
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer
-
-    def filter_queryset(self, queryset):
-        queryset = Task.objects.all().filter(owner=self.request.user)
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+# class MyList(generics.ListCreateAPIView):
+#     # todo: logout gives error int() argument must be a string or a number, not 'AnonymousUser'
+#     queryset = Task.objects.all()
+#     serializer_class = TaskSerializer
+#
+#     def filter_queryset(self, queryset):
+#         queryset = Task.objects.all().filter(owner=self.request.user)
+#         return queryset
+#
+#     def perform_create(self, serializer):
+#         serializer.save(owner=self.request.user)
 
 
 class MyListApi(APIView):
@@ -44,10 +44,14 @@ class MyListApi(APIView):
         if self.request.user.id is None:  # todo: Find a better way to check if user is not 'AnonymousUser'
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        tasks = Task.objects.all().filter(owner=self.request.user)
-
-        # delegated_task_id_list = TaskList.objects.all().filter(user_id=self.request.user.id)
-
-
+        tasks = Task.objects.all().filter(Q(owner=self.request.user) | Q(delegate=self.request.user))
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
+
+    def post(self, request, format=None):  # todo: get post method to work
+
+        serializer = TaskSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
