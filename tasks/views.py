@@ -48,7 +48,7 @@ class MyListApi(APIView):
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
-    def post(self, request, format=None):  # todo: get post method to work
+    def post(self, request, format=None):  # todo: get post method to work, make unavailable for anonymous users
 
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
