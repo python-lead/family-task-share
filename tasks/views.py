@@ -52,6 +52,8 @@ class MyListApi(APIView):
 
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
+            serializer.validated_data['owner_id'] = request.user.id  # without this i get
+            # IntegrityError: null value in column "owner_id" violates not-null constraint error
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

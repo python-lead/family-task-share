@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 
 import os
-from .SECRET_KEY import SECRET_KEY as SECRET, DB_PASSWORD, DB_USER
+from .SECRET_KEY import SECRET_KEY as SECRET, DB_PASSWORD, DB_USER  # todo: change SECRET_KEY.py to SECRET.json
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
