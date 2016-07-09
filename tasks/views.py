@@ -1,12 +1,9 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from tasks.models import Task
 from tasks.serializers import TaskSerializer
-
-from django.http import Http404
 from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -24,7 +21,6 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # class MyList(generics.ListCreateAPIView):
-#     # todo: logout gives error int() argument must be a string or a number, not 'AnonymousUser'
 #     queryset = Task.objects.all()
 #     serializer_class = TaskSerializer
 #
@@ -50,7 +46,7 @@ class MyListApi(APIView):
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
-    def post(self, request, format=None):  # todo: get post method to work, make unavailable for anonymous users
+    def post(self, request, format=None):  # todo: test this method
 
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():

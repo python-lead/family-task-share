@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 
 
-class Family(models.Model):  # todo: change name to family. Class names shouldn't be in plural form
+class Family(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='Family')
     family_name = models.CharField(max_length=40)
 
