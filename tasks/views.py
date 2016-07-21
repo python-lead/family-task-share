@@ -5,6 +5,7 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from tasks.permissions import IsOwner
 
 
 class TaskListView(generics.ListCreateAPIView):
@@ -16,20 +17,9 @@ class TaskListView(generics.ListCreateAPIView):
 
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsAuthenticated, IsOwner)
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-
-
-# class MyList(generics.ListCreateAPIView):
-#     queryset = Task.objects.all()
-#     serializer_class = TaskSerializer
-#
-#     def filter_queryset(self, queryset):
-#         queryset = Task.objects.all().filter(owner=self.request.user)
-#         return queryset
-#
-#     def perform_create(self, serializer):
-#         serializer.save(owner=self.request.user)
 
 
 class MyListApi(APIView):
@@ -46,7 +36,7 @@ class MyListApi(APIView):
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
-    def post(self, request, format=None):  # todo: test this method
+    def post(self, request, format=None):
 
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
@@ -55,3 +45,6 @@ class MyListApi(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
