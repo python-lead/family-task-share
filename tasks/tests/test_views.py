@@ -70,7 +70,6 @@ class MyListApiViewTest(TestCase):
         Testing if unauthorized can't create new task
         """
         client = APIClient()
-        # url = reverse('tasks:tasks')
         data = {}
         response = client.post(self.url_tasks, data, format='json')
 
@@ -82,8 +81,6 @@ class MyListApiViewTest(TestCase):
         """
         client = APIClient()
         client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
-        # url = reverse('tasks:tasks')
-        # url = self.url
         data = {}  # todo: this test needs further validations
         response = client.post(self.url_tasks, data, format='json')
 
@@ -95,7 +92,6 @@ class MyListApiViewTest(TestCase):
         """
         client = APIClient()
         client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
-        # url = reverse('tasks:tasks')
         data = {'description': 'Take out the trash', 'repeatable': True}
         response = client.post(self.url_tasks, data, format='json')
 
@@ -107,7 +103,6 @@ class MyListApiViewTest(TestCase):
         """
         client = APIClient()
         client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
-        # url = reverse('tasks:tasks')
         data = {'description': 'Take out the trash', 'repeatable': True}
         client.post(self.url_tasks, data, format='json')
         client.post(self.url_tasks, data, format='json')
@@ -123,6 +118,7 @@ class MyListApiViewTest(TestCase):
         request = self.factory.get(reverse('task', kwargs={'pk': 1}))
         request.user = User()
         response = TaskDetailView.as_view()(request, pk=1)
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_task(self):
@@ -132,9 +128,9 @@ class MyListApiViewTest(TestCase):
         client = APIClient()
         client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
         data = {'description': 'User1 Task'}
-        client.post(self.url_tasks, data, format='json')
-
-        response = client.get(reverse('task', kwargs={'pk': 3}), format='json')  # todo: here starts problems with id's
+        response = client.post(self.url_tasks, data, format='json')
+        pk = response.data['id']
+        response = client.get(reverse('task', kwargs={'pk': pk}), format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -145,10 +141,10 @@ class MyListApiViewTest(TestCase):
         client = APIClient()
         client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
         data = {'description': 'User1 Task'}
-        client.post(self.url_tasks, data, format='json')
-
+        response = client.post(self.url_tasks, data, format='json')
+        pk = response.data['id']
         client.login(username='User2', password='c0mp1ic4t3dP@ssW05d111')
-        response = client.get(reverse('task', kwargs={'pk': 1}), format='json')
+        response = client.get(reverse('task', kwargs={'pk': pk}), format='json')
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -159,11 +155,12 @@ class MyListApiViewTest(TestCase):
         client = APIClient()
         client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
         data = {'description': 'User1 Task'}
-        client.post(self.url_tasks, data, format='json')
+        response = client.post(self.url_tasks, data, format='json')
+        pk = response.data['id']
 
-        request = self.factory.get(reverse('task', kwargs={'pk': 1}))
+        request = self.factory.get(reverse('task', kwargs={'pk': pk}))
         request.user = AnonymousUser()
-        response = TaskDetailView.as_view()(request, pk=1)
+        response = TaskDetailView.as_view()(request, pk=pk)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)  # todo: Raise 401 when user is Unauthorized
 
@@ -174,15 +171,11 @@ class MyListApiViewTest(TestCase):
         client = APIClient()
         client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
         data = {'description': 'User1 Task'}
-        client.post(self.url_tasks, data, format='json')
+        response = client.post(self.url_tasks, data, format='json')
+        pk = response.data['id']
+        client.get(self.url_tasks, format='json')
+        response = client.delete(reverse('task', kwargs={'pk': pk}))
 
-        response = client.get(self.url_tasks, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        print '!!! test_task_delete tasks dict before deleting !!!'
-        print response.data
-
-        response = client.delete(reverse('task', kwargs={'pk': 5}))  # todo: For some reason id was incremented to 5
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_task_delete_forbidden(self):
@@ -192,9 +185,10 @@ class MyListApiViewTest(TestCase):
         client = APIClient()
         client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
         data = {'description': 'User1 Task'}
-        client.post(self.url_tasks, data, format='json')
+        response = client.post(self.url_tasks, data, format='json')
+        pk = response.data['id']
         client.logout()
         client.login(username='User2', password='c0mp1ic4t3dP@ssW05d111')
+        response = client.get(reverse('task', kwargs={'pk': pk}))
 
-        response = client.get(reverse('task', kwargs={'pk': 6}))  # todo: Same problem as above, pk should be static
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)  # This one gives 404
