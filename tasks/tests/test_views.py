@@ -203,7 +203,6 @@ class MyListApiViewTest(TestCase):
         response = client.put(reverse('task', kwargs={'pk': pk}), data=new_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # print response.data['reactivated_at']  # todo: test shows RuntimeWarning, check it out later
         response = client.get(reverse('task', kwargs={'pk': pk}))
 
         self.assertEqual(json.loads(response.content)['description'], new_data['description'])

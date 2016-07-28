@@ -1,3 +1,4 @@
 *.pyc
 .idea/
 SECRET_KEY
+.coverage
