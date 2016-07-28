@@ -5,7 +5,7 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from tasks.permissions import IsOwner
+from tasks.permissions import IsOwnerOrDelegate
 
 
 class TaskListView(generics.ListCreateAPIView):
@@ -17,7 +17,7 @@ class TaskListView(generics.ListCreateAPIView):
 
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated, IsOwner)
+    permission_classes = (IsAuthenticated, IsOwnerOrDelegate,)
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
 
@@ -32,7 +32,7 @@ class MyListApi(APIView):
 
     def get(self, request, format=None):
 
-        tasks = Task.objects.all().filter(Q(owner=self.request.user) | Q(delegate=self.request.user))
+        tasks = Task.objects.all().filter(Q(owner=self.request.user) | Q(delegates=self.request.user))
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 

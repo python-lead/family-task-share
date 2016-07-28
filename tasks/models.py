@@ -14,7 +14,7 @@ class Task(models.Model):
     reactivated_at = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=False)
     repeatable = models.BooleanField(default=False)
-    delegate = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
+    delegates = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
 
     def __str__(self):
         return "[{}] owner {}, desc: {}".format(self.id,

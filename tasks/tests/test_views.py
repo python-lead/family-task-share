@@ -4,7 +4,6 @@ from django.core.urlresolvers import reverse
 from rest_framework.test import APIRequestFactory, APIClient
 from rest_framework import status
 import json
-from tasks.models import Task
 
 from tasks.views import MyListApi, TaskDetailView
 
@@ -29,19 +28,32 @@ class MyListApiViewTest(TestCase):
         test_get_existing_task_Unauthorized
         test_task_delete
         test_task_delete_forbidden
+        test_update_existing_task
+        test_update_task_unauthorized
+
+    'task/{task_id}' view as delegate
+
+        test_delegate_get_task
+        test_delegate_put_task_unauthorized
+        test_delegate_delete_task_unauthorized
 
     Test coverage not yet implemented:
-
-        -test .put methods
+        -
     """
-    url_tasks = reverse('tasks')
 
     def setUp(self):
 
         # factory setup for tests
+        self.url_tasks = reverse('tasks')
         self.factory = APIRequestFactory()
-        self.user1 = User.objects.create_user(username='User1', password='c0mp1ic4t3dP@ssW05d111')
-        self.user2 = User.objects.create_user(username='User2', password='c0mp1ic4t3dP@ssW05d111')
+        self.password = 'c0mp1ic4t3dP@ssW05d111'
+        self.user1 = User.objects.create_user(username='User1', password=self.password)
+        self.user2 = User.objects.create_user(username='User2', password=self.password)
+
+    def create_logged_client(self, user):
+        client = APIClient()
+        client.login(username=user, password=self.password)
+        return client
 
     def test_anonymous_user_view_access(self):
         # test assure that anonymous user doesn't have access to MyListApi view
@@ -79,8 +91,7 @@ class MyListApiViewTest(TestCase):
         """
         Testing if authorized user can't create new task with wrong data
         """
-        client = APIClient()
-        client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User1')
         data = {}  # todo: this test needs further validations
         response = client.post(self.url_tasks, data, format='json')
 
@@ -90,8 +101,7 @@ class MyListApiViewTest(TestCase):
         """
         Testing if authorized user can create new task
         """
-        client = APIClient()
-        client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User1')
         data = {'description': 'Take out the trash', 'repeatable': True}
         response = client.post(self.url_tasks, data, format='json')
 
@@ -101,8 +111,7 @@ class MyListApiViewTest(TestCase):
         """
         Testing if creating tasks properly increment the amount of tasks owned by user
         """
-        client = APIClient()
-        client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User1')
         data = {'description': 'Take out the trash', 'repeatable': True}
         client.post(self.url_tasks, data, format='json')
         client.post(self.url_tasks, data, format='json')
@@ -125,11 +134,9 @@ class MyListApiViewTest(TestCase):
         """
         Testing if User can request task detail for his existing task
         """
-        client = APIClient()
-        client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User1')
         data = {'description': 'User1 Task'}
-        response = client.post(self.url_tasks, data, format='json')
-        pk = response.data['id']
+        pk = client.post(self.url_tasks, data, format='json').data['id']
         response = client.get(reverse('task', kwargs={'pk': pk}), format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -138,11 +145,9 @@ class MyListApiViewTest(TestCase):
         """
         Testing if user can't access tasks he is not allowed to
         """
-        client = APIClient()
-        client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User1')
         data = {'description': 'User1 Task'}
-        response = client.post(self.url_tasks, data, format='json')
-        pk = response.data['id']
+        pk = client.post(self.url_tasks, data, format='json').data['id']
         client.login(username='User2', password='c0mp1ic4t3dP@ssW05d111')
         response = client.get(reverse('task', kwargs={'pk': pk}), format='json')
 
@@ -152,11 +157,9 @@ class MyListApiViewTest(TestCase):
         """
         Testing if user can't access a task then he is unauthorized (not logged in)
         """
-        client = APIClient()
-        client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User1')
         data = {'description': 'User1 Task'}
-        response = client.post(self.url_tasks, data, format='json')
-        pk = response.data['id']
+        pk = client.post(self.url_tasks, data, format='json').data['id']
 
         request = self.factory.get(reverse('task', kwargs={'pk': pk}))
         request.user = AnonymousUser()
@@ -168,11 +171,9 @@ class MyListApiViewTest(TestCase):
         """
         Testing if user can delete a task he owns
         """
-        client = APIClient()
-        client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User1')
         data = {'description': 'User1 Task'}
-        response = client.post(self.url_tasks, data, format='json')
-        pk = response.data['id']
+        pk = client.post(self.url_tasks, data, format='json').data['id']
         client.get(self.url_tasks, format='json')
         response = client.delete(reverse('task', kwargs={'pk': pk}))
 
@@ -182,13 +183,88 @@ class MyListApiViewTest(TestCase):
         """
         Testing if user can't delete a task he doesn't own
         """
-        client = APIClient()
-        client.login(username='User1', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User1')
         data = {'description': 'User1 Task'}
-        response = client.post(self.url_tasks, data, format='json')
-        pk = response.data['id']
+        pk = client.post(self.url_tasks, data, format='json').data['id']
         client.logout()
-        client.login(username='User2', password='c0mp1ic4t3dP@ssW05d111')
+        client = self.create_logged_client('User2')
         response = client.get(reverse('task', kwargs={'pk': pk}))
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)  # This one gives 404
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_existing_task(self):
+        """
+        Testing if authorized user can update a task using .put method
+        """
+        client = self.create_logged_client('User1')
+        data = {'description': 'This is old description', 'repeatable': False}
+        pk = client.post(self.url_tasks, data=data, format='json').data['id']
+        new_data = {'description': 'This is old description', 'repeatable': True}
+        response = client.put(reverse('task', kwargs={'pk': pk}), data=new_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # print response.data['reactivated_at']  # todo: test shows RuntimeWarning, check it out later
+        response = client.get(reverse('task', kwargs={'pk': pk}))
+
+        self.assertEqual(json.loads(response.content)['description'], new_data['description'])
+
+    def test_update_task_unauthorized(self):
+        """
+        Testing if unauthorized user can't update an task
+        """
+        client = self.create_logged_client('User1')
+        data = {'description': 'This is old description', 'repeatable': False}
+        pk = client.post(self.url_tasks, data=data, format='json').data['id']
+        client.logout()
+        client.login(username='User2', password=self.password)
+        new_data = {'description': 'This is old description', 'repeatable': True}
+        response = client.put(reverse('task', kwargs={'pk': pk}), data=new_data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+#     things to test as delegate - post with delegate, get, put, delete
+
+    def test_delegate_get_task(self):
+        """
+        Testing if delegates can access tasks which they are allowed
+        """
+        client = self.create_logged_client('User1')
+        data = {'description': 'This is User1 task delegated to User2', 'delegates': [self.user2.id]}
+        pk = client.post(self.url_tasks, data).data['id']
+        client.logout()
+        client.login(username='User2', password=self.password)
+        response = client.get(reverse('task', kwargs={'pk': pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delegate_put_task_unauthorized(self):
+        """
+        Testing if delegates can't update tasks which they are allowed
+        """
+        client = self.create_logged_client('User1')
+        data = {'description': 'This is User1 task delegated to User2', 'delegates': [self.user2.id]}
+        pk = client.post(self.url_tasks, data).data['id']
+        client.logout()
+        client.login(username='User2', password=self.password)
+        response = client.put(reverse('task', kwargs={'pk': pk}), data=data)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delegate_delete_task_unauthorized(self):
+        """
+        Testing if delegates can't delete tasks which they are allowed
+        """
+        client = self.create_logged_client('User1')
+        data = {'description': 'This is User1 task delegated to User2', 'delegates': [self.user2.id]}
+        pk = client.post(self.url_tasks, data).data['id']
+        client.logout()
+        client.login(username='User2', password=self.password)
+        response = client.delete(reverse('task', kwargs={'pk': pk}))
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+
+
+
+
+
