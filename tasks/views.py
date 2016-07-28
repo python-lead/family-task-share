@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from tasks.permissions import IsOwnerOrDelegate
+from rest_framework.renderers import TemplateHTMLRenderer
 
 
 class TaskListView(generics.ListCreateAPIView):
@@ -29,6 +30,8 @@ class MyListApi(APIView):
     permission_classes = (IsAuthenticated,)  # using permission_classes takes care of anonymous users accessing this
     #  view, but I need to understand how to change response on authentication failure from 403 to 401,
     # something about including WWW-Authenticate header
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'tasks/mytasks.html'
 
     def get(self, request, format=None):
 
